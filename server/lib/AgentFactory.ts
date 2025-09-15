@@ -3,75 +3,49 @@
 
 import { performance } from 'perf_hooks';
 import { InputParser, ParsedInput } from './InputParser';
+
+// Import agents and their response types
 import { AgileAgent, AgileResponse } from './agents/AgileAgent';
 import { KanbanAgent, KanbanResponse } from './agents/KanbanAgent';
 import { GTDAgent, GTDResponse } from './agents/GTDAgent';
+import { PARAAgent, PARAResponse } from './agents/PARAAgent';
+import { CustomAgent, CustomResponse } from './agents/CustomAgent';
+import { SemanticAgent, SemanticResponse } from './agents/SemanticAgent';
+
 import { ProgressOrchestrator, OrchestrationResult, AllFrameworkResponses } from './ProgressOrchestrator';
+import { embedAndStoreTask } from './embedding';
+import { SimilarTask } from './embedding'; // Import SimilarTask interface
 
 // --- INTERFACE DEFINITIONS ---
 
-// Re-defining UserContext here to be the single source of truth for the factory.
+// The UserContext now includes historical data for other agents to use.
 export interface UserContext {
+  userId: number;
   energyState: 'High' | 'Medium' | 'Low' | 'Hyperfocus' | 'Scattered';
   cognitiveType?: 'adhd' | 'autism' | 'combined' | 'neurotypical' | 'unknown';
-  // history could be added for more advanced agents
+  historicalContext?: SimilarTask[]; // <-- New: Provides agents with context from similar past tasks.
 }
 
-// Mock interfaces for agents that are not yet implemented.
-export interface PARAResponse {
-    classification: string;
-    items: { title: string; category: string}[];
-}
-
-export interface CustomResponse {
-    neuroAdvice: string;
-    momentumTriggers: string[];
-}
-
-// The final, combined response from all framework agents.
 export interface FrameworkResponses {
-    agile: AgileResponse;
-    kanban: KanbanResponse;
-    gtd: GTDResponse;
-    para: PARAResponse;
-    custom: CustomResponse;
+    agile?: AgileResponse;
+    kanban?: KanbanResponse;
+    gtd?: GTDResponse;
+    para?: PARAResponse;
+    custom?: CustomResponse;
 }
 
-// The top-level response structure for the entire operation.
 export interface MultiFrameworkResponse {
+    semantic: SemanticResponse;
     frameworks: FrameworkResponses;
-    orchestration: OrchestrationResult;
+    orchestration: OrchestrationResult | null;
     metadata: {
         processingTimeMs: number;
         inputComplexity: 'low' | 'medium' | 'high';
         confidenceScore: number;
+        embeddingStored: boolean;
+        agentsExecuted: string[];
     };
 }
-
-// --- MOCK AGENT IMPLEMENTATIONS ---
-// These stand in for PARAAgent.ts and CustomAgent.ts until they are created.
-
-class PARAAgent {
-    static async process(parsedInput: ParsedInput, userContext: UserContext): Promise<PARAResponse> {
-        // Mock logic
-        return {
-            classification: "Project",
-            items: parsedInput.tasks.map(t => ({ title: t.content, category: 'General' }))
-        };
-    }
-}
-
-class CustomAgent {
-    static async process(parsedInput: ParsedInput, userContext: UserContext): Promise<CustomResponse> {
-        // Mock logic
-        const advice = userContext.energyState === 'Low' ? "Be kind to yourself and start with a small, easy win." : "Your energy is high! Tackle a challenging task.";
-        return {
-            neuroAdvice: advice,
-            momentumTriggers: ["Listen to your favorite focus playlist.", "Take a 5-minute break after this task."]
-        };
-    }
-}
-
 
 // --- AGENT FACTORY IMPLEMENTATION ---
 
@@ -79,43 +53,75 @@ export class AgentFactory {
   static async processInput(input: string, userContext: UserContext): Promise<MultiFrameworkResponse> {
     const startTime = performance.now();
     
-    // 1. Parse and understand the user's input deterministically.
+    // 1. Store Embedding (asynchronously)
+    let embeddingStored = false;
+    embedAndStoreTask(userContext.userId, input)
+        .then(() => { embeddingStored = true; })
+        .catch(error => console.error("AgentFactory: Failed to store embedding.", error));
+
+    // 2. Semantic Analysis to get recommendations and historical context.
+    const semanticResult = await SemanticAgent.process(input, userContext);
+    const recommendedFrameworks = new Set(semanticResult.recommendedFrameworks);
+    
+    // 3. Enrich the UserContext with historical data for other agents.
+    const enrichedUserContext: UserContext = {
+        ...userContext,
+        historicalContext: semanticResult.similarPastTasks
+    };
+
+    // 4. Parse Input for Deterministic Agents
     const parsedInput = InputParser.analyze(input);
     
-    // 2. Process the structured input through all specialized agents in parallel.
-    const [agileResult, kanbanResult, gtdResult, paraResult, customResult] = await Promise.all([
-      AgileAgent.process(parsedInput, userContext),
-      KanbanAgent.process(parsedInput, userContext), 
-      GTDAgent.process(parsedInput, userContext),
-      PARAAgent.process(parsedInput, userContext), // Using mock agent
-      CustomAgent.process(parsedInput, userContext)  // Using mock agent
-    ]);
-    
-    // 3. Analyze the combined outputs to find cross-framework momentum opportunities.
-    const allResponses: AllFrameworkResponses = { agileResult, kanbanResult, gtdResult };
-    const orchestration = ProgressOrchestrator.analyze(allResponses, userContext);
+    // 5. Dynamic Agent Execution using the enriched context.
+    const agentPromises: { [key: string]: Promise<any> } = {};
+    const agentsToRun = [];
+
+    // The set of agents to run is determined by the SemanticAgent's output.
+    const agentMap = {
+        'Agile': () => AgileAgent.process(parsedInput, enrichedUserContext),
+        'Kanban': () => KanbanAgent.process(parsedInput, enrichedUserContext),
+        'GTD': () => GTDAgent.process(parsedInput, enrichedUserContext),
+        'PARA': () => PARAAgent.process(parsedInput, enrichedUserContext),
+        'Custom': () => CustomAgent.process(parsedInput, enrichedUserContext)
+    };
+
+    for (const framework of recommendedFrameworks) {
+        if (agentMap[framework as keyof typeof agentMap]) {
+            agentPromises[framework.toLowerCase()] = agentMap[framework as keyof typeof agentMap]();
+            agentsToRun.push(framework);
+        }
+    }
+
+    const agentResults = await Promise.all(Object.values(agentPromises));
+    const frameworkResponses: FrameworkResponses = {};
+    Object.keys(agentPromises).forEach((key, index) => {
+        frameworkResponses[key as keyof FrameworkResponses] = agentResults[index];
+    });
+
+    // 6. Orchestration
+    let orchestration: OrchestrationResult | null = null;
+    if (agentsToRun.length > 0) {
+        const allResponses: AllFrameworkResponses = frameworkResponses;
+        orchestration = ProgressOrchestrator.analyze(allResponses, enrichedUserContext);
+    }
     
     const processingTime = performance.now() - startTime;
     
     return {
-      frameworks: { 
-          agile: agileResult, 
-          kanban: kanbanResult, 
-          gtd: gtdResult, 
-          para: paraResult, 
-          custom: customResult
-      },
+      semantic: semanticResult,
+      frameworks: frameworkResponses,
       orchestration,
       metadata: {
         processingTimeMs: Math.round(processingTime),
         inputComplexity: parsedInput.complexity,
-        confidenceScore: this.calculateConfidence(parsedInput) // Mock confidence score
+        confidenceScore: this.calculateConfidence(parsedInput),
+        embeddingStored,
+        agentsExecuted: agentsToRun
       }
     };
   }
 
   private static calculateConfidence(parsedInput: ParsedInput): number {
-      // Mock calculation: confidence is higher with fewer, clearer items.
       const totalItems = parsedInput.tasks.length + parsedInput.ideas.length + parsedInput.concerns.length;
       const confidence = Math.max(0.5, 1 - (totalItems / 10) - (parsedInput.complexity === 'high' ? 0.2 : 0));
       return parseFloat(confidence.toFixed(2));

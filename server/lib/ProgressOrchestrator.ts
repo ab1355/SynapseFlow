@@ -2,43 +2,44 @@
 // server/lib/ProgressOrchestrator.ts
 
 import { AgileResponse, UserStory } from "./agents/AgileAgent";
-import { KanbanResponse, KanbanCard, KanbanBoard } from "./agents/KanbanAgent";
+import { KanbanResponse, KanbanCard } from "./agents/KanbanAgent";
 import { GTDResponse, NextAction } from "./agents/GTDAgent";
+import { PARAResponse, PARAItem } from "./agents/PARAAgent";
+import { CustomResponse, CustomItem } from "./agents/CustomAgent";
 
 // --- INTERFACE DEFINITIONS ---
 
-// User context, similar to other agents
 export interface UserContext {
   energyState: 'High' | 'Medium' | 'Low' | 'Hyperfocus' | 'Scattered';
   cognitiveType?: 'adhd' | 'autism' | 'combined' | 'neurotypical' | 'unknown';
 }
 
-// A container for all agent responses
+// The container for all agent responses now uses optional properties.
 export interface AllFrameworkResponses {
-    agileResult: AgileResponse;
-    kanbanResult: KanbanResponse;
-    gtdResult: GTDResponse;
-    // para and custom can be added when their agents are defined
+    agileResult?: AgileResponse;
+    kanbanResult?: KanbanResponse;
+    gtdResult?: GTDResponse;
+    paraResult?: PARAResponse;
+    customResult?: CustomResponse;
 }
 
-// Represents a connection between tasks in different frameworks
+_type AllTaskTypes = UserStory | KanbanCard | NextAction | PARAItem | CustomItem;_
+
 export interface CrossProjectRelation {
   type: 'shared_skill' | 'dependency' | 'sequential_task';
   strength: 'low' | 'medium' | 'high';
-  tasks: (UserStory | KanbanCard | NextAction)[];
+  tasks: AllTaskTypes[];
   skill?: string;
-  momentumPotential: number; // A score from 0 to 1
+  momentumPotential: number;
 }
 
-// Represents the downstream effect of completing one task
 export interface RippleEffect {
-    sourceTask: string; // ID of the task that causes the ripple
-    targetProject: string; // Project/framework that is affected
+    sourceTask: string;
+    targetProject: string;
     impactDescription: string;
     tasksUnblocked: number;
 }
 
-// Metrics and messages to boost user motivation
 export interface MotivationAmplifiers {
     achievementSummary: string;
     progressMetrics: {
@@ -50,7 +51,6 @@ export interface MotivationAmplifiers {
     celebrationMessage: string;
 }
 
-// The final output of the orchestrator
 export interface OrchestrationResult {
   crossProjectImpacts: CrossProjectRelation[];
   momentumScore: number;
@@ -59,20 +59,18 @@ export interface OrchestrationResult {
   motivationAmplifiers: MotivationAmplifiers;
 }
 
-// Represents a group of tasks sharing a common skill
 interface SkillGroup {
     skill: string;
-    tasks: (UserStory | KanbanCard | NextAction)[];
+    tasks: AllTaskTypes[];
 }
-
 
 // --- ORCHESTRATOR IMPLEMENTATION ---
 
 export class ProgressOrchestrator {
   static analyze(responses: AllFrameworkResponses, userContext: UserContext): OrchestrationResult {
     const crossProjectRelations = this.detectCrossProjectRelations(responses);
-    const momentumOpportunities = this.calculateMomentumOpportunities(crossProjectRelations);
     const rippleEffects = this.simulateRippleEffects(responses, crossProjectRelations);
+    const momentumOpportunities = this.calculateMomentumOpportunities(crossProjectRelations);
     
     return {
       crossProjectImpacts: crossProjectRelations,
@@ -86,11 +84,14 @@ export class ProgressOrchestrator {
   private static detectCrossProjectRelations(responses: AllFrameworkResponses): CrossProjectRelation[] {
     const relations: CrossProjectRelation[] = [];
     
-    const allTasks = [
-      ...responses.agileResult.userStories,
-      ...responses.kanbanResult.board.cards,
-      ...responses.gtdResult.nextActions
-    ] as (UserStory | KanbanCard | NextAction)[];
+    // Safely combine all items from all available agent responses.
+    const allTasks: AllTaskTypes[] = [
+      ...(responses.agileResult?.userStories || []),
+      ...(responses.kanbanResult?.board.cards || []),
+      ...(responses.gtdResult?.nextActions || []),
+      ...(responses.paraResult?.items || []),
+      ...(responses.customResult?.items || [])
+    ];
     
     const skillGroups = this.groupBySharedSkills(allTasks);
     
@@ -109,6 +110,14 @@ export class ProgressOrchestrator {
     return relations;
   }
   
+  // ... (The rest of the helper methods remain the same, as they are resilient to empty inputs) ...
+
+  private static getTaskTitle(task: AllTaskTypes): string {
+    if ('title' in task) return task.title;
+    if ('content' in task) return task.content;
+    return 'Untitled Task';
+  }
+
   private static createMotivationAmplifiers(rippleEffects: RippleEffect[]): MotivationAmplifiers {
     const totalProjectsAdvanced = new Set(rippleEffects.map(e => e.targetProject)).size;
     const totalTasksUnblocked = rippleEffects.reduce((sum, e) => sum + e.tasksUnblocked, 0);
@@ -125,21 +134,21 @@ export class ProgressOrchestrator {
     };
   }
 
-  // --- Helper Methods (Mocks) ---
-
   private static calculateMomentumOpportunities(relations: CrossProjectRelation[]): number[] {
       return relations.map(r => r.momentumPotential);
   }
 
   private static simulateRippleEffects(responses: AllFrameworkResponses, relations: CrossProjectRelation[]): RippleEffect[] {
-      if (relations.length === 0) return [];
+      if (relations.length < 1 || relations[0].tasks.length < 2) return [];
 
-      const firstRelation = relations[0];
+      const sourceTask = relations[0].tasks[0];
+      const targetTask = relations[0].tasks[1];
+
       return [
           {
-              sourceTask: (firstRelation.tasks[0] as any).id,
-              targetProject: "Kanban Board",
-              impactDescription: `Completing the Agile story for '${(firstRelation.tasks[0] as any).title}' also progresses a similar card on your Kanban board.`,
+              sourceTask: this.getTaskTitle(sourceTask),
+              targetProject: "Related Framework", 
+              impactDescription: `Completing '${this.getTaskTitle(sourceTask)}' also makes progress on '${this.getTaskTitle(targetTask)}' due to shared skills.`,
               tasksUnblocked: 1,
           }
       ];
@@ -148,11 +157,11 @@ export class ProgressOrchestrator {
   private static calculateOverallMomentum(opportunities: number[]): number {
       if(opportunities.length === 0) return 0;
       const sum = opportunities.reduce((a, b) => a + b, 0);
-      return Math.round((sum / opportunities.length) * 100); // Return as a percentage
+      return Math.round((sum / opportunities.length) * 100);
   }
 
   private static generateActionableRecommendations(rippleEffects: RippleEffect[], userContext: UserContext): string[] {
-      if (rippleEffects.length === 0) return ["No specific momentum opportunities found, just focus on your next single task."];
+      if (rippleEffects.length === 0) return ["No specific momentum opportunities found. Focus on the recommended framework's primary tasks."];
       const effect = rippleEffects[0];
       return [
           `Momentum Alert: ${effect.impactDescription}`,
@@ -160,15 +169,14 @@ export class ProgressOrchestrator {
       ];
   }
 
-  private static groupBySharedSkills(tasks: (UserStory | KanbanCard | NextAction)[]): SkillGroup[] {
-      // Mock implementation: group by keywords like 'api', 'ui', 'database'
+  private static groupBySharedSkills(tasks: AllTaskTypes[]): SkillGroup[] {
       const groups: { [key: string]: SkillGroup } = {};
-      const commonSkills = ['api', 'ui', 'database', 'testing'];
+      const commonSkills = ['api', 'ui', 'database', 'testing', 'security', 'auth', 'docs'];
 
       tasks.forEach(task => {
-          const title = 'title' in task ? task.title : task.content;
+          const title = this.getTaskTitle(task).toLowerCase();
           for (const skill of commonSkills) {
-              if (title.toLowerCase().includes(skill)) {
+              if (title.includes(skill)) {
                   if (!groups[skill]) {
                       groups[skill] = { skill, tasks: [] };
                   }
@@ -186,7 +194,6 @@ export class ProgressOrchestrator {
   }
 
   private static calculateMomentumPotential(group: SkillGroup): number {
-      // Simple heuristic: more tasks = more potential
       return Math.min(1, group.tasks.length / 5.0);
   }
 
