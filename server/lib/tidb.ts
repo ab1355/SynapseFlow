@@ -1,4 +1,6 @@
 import mysql from 'mysql2/promise';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // TiDB connection configuration
 interface TiDBConfig {
@@ -8,6 +10,7 @@ interface TiDBConfig {
   database: string;
   port?: number;
   ssl?: {
+    ca?: string;
     rejectUnauthorized: boolean;
   };
 }
@@ -30,7 +33,8 @@ export function initTiDBConnection(): mysql.Pool {
     database: process.env.TIDB_DATABASE || 'synapse',
     port: parseInt(process.env.TIDB_PORT || '4000'),
     ssl: {
-      rejectUnauthorized: false // TiDB Serverless uses SSL
+      ca: fs.readFileSync(path.join(process.cwd(), 'attached_assets/ca-cert.pem'), 'utf8'),
+      rejectUnauthorized: true
     }
   };
 
