@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { healthCheck } from "./lib/tidb";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // put application routes here
@@ -8,6 +9,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // use storage to perform CRUD operations on the storage interface
   // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+
+  // TiDB Health Check endpoint
+  app.get("/api/tidb/health", async (req, res) => {
+    try {
+      const healthStatus = await healthCheck();
+      res.json(healthStatus);
+    } catch (error) {
+      res.status(500).json({ 
+        status: 'error', 
+        message: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
 
   // Brain Dump API endpoint
   app.post("/api/brain-dump", async (req, res) => {
