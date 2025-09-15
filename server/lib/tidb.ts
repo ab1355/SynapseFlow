@@ -435,6 +435,59 @@ export const TaskOperations = {
 };
 
 /**
+ * Execute schema initialization from SQL file
+ */
+export async function initializeSchema(): Promise<{ success: boolean; message: string; error?: string }> {
+  try {
+    const schemaSQL = fs.readFileSync(path.join(process.cwd(), 'database/schema.sql'), 'utf8');
+    
+    // Split SQL file into individual statements (basic splitting by semicolon)
+    const statements = schemaSQL
+      .split(';')
+      .map(stmt => stmt.trim())
+      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+    
+    let successCount = 0;
+    const errors = [];
+    
+    for (const statement of statements) {
+      try {
+        // Skip comments and empty statements
+        if (statement.startsWith('--') || statement.length < 5) continue;
+        
+        await executeQuery(statement);
+        successCount++;
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`Statement failed: ${errorMsg}`);
+        console.warn(`Schema statement failed:`, errorMsg);
+        console.warn(`Statement:`, statement.substring(0, 100) + '...');
+      }
+    }
+    
+    if (errors.length === 0) {
+      return {
+        success: true,
+        message: `Database schema initialized successfully! Executed ${successCount} statements.`
+      };
+    } else {
+      return {
+        success: false,
+        message: `Schema initialization completed with ${errors.length} errors. ${successCount} statements succeeded.`,
+        error: errors.join('; ')
+      };
+    }
+    
+  } catch (error) {
+    return {
+      success: false,
+      message: 'Failed to initialize database schema',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+/**
  * Health check for TiDB connection
  */
 export async function healthCheck(): Promise<{ status: 'connected' | 'disconnected'; error?: string }> {

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { healthCheck } from "./lib/tidb";
+import { healthCheck, initializeSchema } from "./lib/tidb";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // put application routes here
@@ -9,6 +9,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // use storage to perform CRUD operations on the storage interface
   // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+
+  console.log('Registering API routes...');
 
   // TiDB Health Check endpoint
   app.get("/api/tidb/health", async (req, res) => {
@@ -19,6 +21,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         status: 'error', 
         message: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
+  // TiDB Schema Initialization endpoint
+  app.post("/api/tidb/init-schema", async (req, res) => {
+    console.log('POST /api/tidb/init-schema called');
+    try {
+      const result = await initializeSchema();
+      console.log('Schema initialization result:', result);
+      
+      if (result.success) {
+        res.json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error('Schema initialization error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Schema initialization failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
