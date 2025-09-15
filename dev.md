@@ -2,86 +2,44 @@
 
 This document outlines the current state of the Synapse project, its architecture, and future development plans. For a general overview, see `README.md`.
 
-## 🚧 Current Status: Backend Refactoring Complete
+## 🚧 Current Status: Vector-Enhanced Agent System Complete
 
-The initial backend architecture has been significantly refactored into a modular, scalable, and testable multi-agent system. This new structure provides a solid foundation for the advanced vector-based features outlined in the roadmap below.
+The initial backend architecture has been significantly refactored and enhanced into a modular, scalable, and context-aware multi-agent system. This new structure provides a solid foundation for the advanced vector-based features outlined in the roadmap below.
 
 ### Key Achievements
 
 - **Modular Agent Architecture**: The core logic is now managed by a central `AgentFactory` that coordinates multiple specialized agents (`AgileAgent`, `KanbanAgent`, `GTDAgent`).
 - **Comprehensive Testing Suite**: The project includes robust E2E and performance benchmark tests to ensure API reliability and speed.
 - **Self-Contained Modules**: Each component is fully self-contained, improving code clarity and maintainability.
+- **Vector-Powered Intelligence**: The system now leverages vector embeddings to understand the semantic meaning of tasks, enabling intelligent framework selection and context-aware recommendations.
 
-## 🏛️ New Backend Architecture
+## 🚀 Completed Roadmap: The Vector-Enhanced Agent System
 
-The backend processing pipeline is orchestrated by the `AgentFactory` and consists of several key modules:
+The following phases have been completed, transforming Synapse into a proactive and intelligent productivity assistant.
 
-- **`InputParser`**: Deterministically parses raw text into structured tasks, ideas, concerns, and projects.
-- **Specialized Agents**: Each agent (`Agile`, `Kanban`, `GTD`) applies a specific productivity framework to the parsed input.
-- **`ProgressOrchestrator`**: Analyzes the outputs from all agents to find cross-framework momentum opportunities.
-- **`AgentFactory`**: The central coordinator that manages the entire workflow.
-
-## 🧪 Testing
-
-The architecture is supported by a robust testing framework:
-
-- **End-to-End (E2E) Tests**: Validate the functionality of the primary `/api/brain-dump` endpoint.
-- **Performance Benchmarks**: Measure and track the performance of the core `AgentFactory`.
-
-## 🚀 Future Roadmap: The Vector-Enhanced Agent System
-
-The next major evolution of Synapse is to transform the current modular system into a **Vector-Enhanced Agent System**. This will enable the application to understand the semantic meaning behind tasks, learn user patterns, and proactively suggest optimal workflows.
-
-This will be achieved by integrating a vector database (leveraging TiDB with `vector<float>(1536)`) and enhancing each agent with new capabilities.
-
-```typescript
-interface VectorEnhancedAgent {
-  // Your existing modular agents
-  processInput(input: string): FrameworkOutput;
-  
-  // NEW: Vector-enhanced capabilities
-  findSimilarTasks(embedding: vector): TaskMatch[];
-  storeSuccessPattern(pattern: FrameworkPattern): void;
-  suggestOptimalFramework(context: vector): FrameworkRecommendation;
-}
-```
-
-### Phase 1: Foundational Enhancements & Vector Table Setup
-
-This phase involves critical backend and frontend work to support the vector-powered features.
-
-- **Database Integration**: Connect the backend to the PostgreSQL database (TiDB Serverless) to persist user data, which is a prerequisite for storing vector embeddings.
-- **Vector Table Setup**: Create the core database tables required for semantic analysis:
-    - `task_embeddings`: Stores vector representations of all tasks and ideas to find similar past work.
-    - `framework_pattern_embeddings`: Stores vectors of successful framework combinations (e.g., the vector for "organizing a complex project" might map to a successful GTD+Agile pattern).
-    - `energy_state_context_vectors`: Stores vectors representing different user contexts (e.g., 'low energy', 'hyperfocus').
-- **Frontend Development**: Begin building the UI components to visualize the rich data from the existing backend, creating the canvas for future vector-powered features.
-- **Implement Missing Agents**: Complete the `PARAAgent.ts` and `CustomAgent.ts` to round out the full suite of framework agents.
+### Phase 1: Foundational Agents
+- **Status**: ✅ Complete
+- **Description**: Implemented a full suite of specialized agents (`Agile`, `Kanban`, `GTD`, `PARA`, `Custom`), each providing a unique analytical perspective on user input.
 
 ### Phase 2: Auto-Embedding Integration
-
-In this phase, we will leverage the database to automatically create vector embeddings from user input without manual management.
-
-- **TiDB Auto-Embedding**: Configure the database to automatically generate vector embeddings for all new "chaotic brain dumps" using a built-in model (e.g., OpenAI's `text-embedding-3-small`). This is the engine that will power all subsequent semantic features.
-- **Real-time Updates**: Implement WebSocket or a similar technology to enable live, real-time communication between the frontend and backend as embeddings are generated and analyzed.
+- **Status**: ✅ Complete
+- **Description**: The system now automatically converts every user input into a vector embedding using a background process and stores it in a `task_embeddings` table. This provides the semantic foundation for all subsequent intelligent features.
 
 ### Phase 3: Semantic Framework Selection
+- **Status**: ✅ Complete
+- **Description**: A new `SemanticAgent` was introduced to analyze the vector embedding of a new user input. It performs a similarity search against past tasks to find semantically related work and recommends the most effective frameworks based on historical patterns.
 
-This phase leverages the vector embeddings to make the system proactive and intelligent.
+### Phase 4: Dynamic Agent Routing
+- **Status**: ✅ Complete
+- **Description**: The `AgentFactory` was upgraded to be a dynamic router. Instead of running all agents every time, it now selectively executes only the agents recommended by the `SemanticAgent`, improving efficiency and relevance. The `ProgressOrchestrator` was also made more resilient to handle this dynamic pipeline.
 
-- **Intelligent Suggestions**: When a user enters a new brain dump, the system will perform a vector search on the `framework_pattern_embeddings` table to find the most successful framework combinations used for similar contexts in the past.
-- **Example Workflow**:
-    1. **User Input**: "I need to organize my scattered thoughts about the quarterly review and plan the next steps."
-    2. **Vector Search**: The system performs a similarity search and finds that, for past "review and plan" type tasks, the user was most effective when using a **GTD + PARA** combination.
-    3. **Recommendation**: The UI auto-suggests this optimal framework mix, reducing cognitive load for the user.
+### Phase 5: Context-Aware Agent Parameters
+- **Status**: ✅ Complete
+- **Description**: The agents are now context-aware. The `AgentFactory` enriches the `UserContext` with the `similarPastTasks` identified by the `SemanticAgent`. This historical data is passed to the framework agents, allowing them to make more informed and personalized decisions (e.g., the `GTDAgent` can now identify recurring patterns in how similar tasks were previously handled).
 
-### Phase 4: Cross-Project Momentum Vectors
-
-This is the ultimate goal: using vector search to create a truly emergent understanding of a user's entire project ecosystem.
-
-- **Semantic Relationship Mapping**: The system will understand that tasks like "fix login bug," "implement 2FA," and "update auth docs" are all semantically related to the concept of "authentication," even if they are in different projects (Agile, GTD, etc.).
-- **Vector-Powered Orchestration**: The `ProgressOrchestrator` will be upgraded to use these semantic vectors. Completing one task will allow the system to identify and surface other, seemingly unrelated tasks that are now easier to complete due to shared cognitive context.
-- **Example Workflow**:
-    1. **User completes task**: "Implement JWT authentication for the public API."
-    2. **Vector Analysis**: The system analyzes the vector for this task and finds strong semantic relationships to tasks in other frameworks, such as a Kanban card for "Secure mobile app endpoints" and a GTD action for "Draft security section of user manual."
-    3. **Momentum Surfacing**: The UI then highlights these related tasks, indicating that working on them now would be highly efficient, thereby advancing 3 other projects at once.
+### Phase 6: Killer Demo Feature - "Neurodivergent Superpowers Visualization"
+- **Status**: ✅ Complete
+- **Description**: To showcase the system's unique value, a real-time visualization was implemented to demonstrate how context-switching can be a strength. This feature turns a perceived "weakness" into a tangible "superpower."
+- **Backend (`ProgressOrchestrator.ts`)**: The `CrossProjectRelation` interface was enhanced with a `progressGain` metric. This quantifies the percentage of progress made on a related task when a semantically similar task is completed. The calculation is based on the number of related tasks and the strength of the semantic link.
+- **Frontend (`ProgressRippleViz.tsx`)**: A new, dedicated React component was created to animate and display these "progress ripples." It takes the initial user input and the `crossProjectImpacts` from the API and renders a cascading visualization of how one action creates a wave of progress across the system.
+- **Integration (`Home.tsx`)**: The `ProgressRippleViz` component was integrated into the main application page. It is conditionally rendered whenever the API response contains `crossProjectImpacts`, providing immediate, powerful visual feedback that demonstrates the core value proposition of the Synapse system.

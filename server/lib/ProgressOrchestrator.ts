@@ -14,7 +14,6 @@ export interface UserContext {
   cognitiveType?: 'adhd' | 'autism' | 'combined' | 'neurotypical' | 'unknown';
 }
 
-// The container for all agent responses now uses optional properties.
 export interface AllFrameworkResponses {
     agileResult?: AgileResponse;
     kanbanResult?: KanbanResponse;
@@ -31,6 +30,7 @@ export interface CrossProjectRelation {
   tasks: AllTaskTypes[];
   skill?: string;
   momentumPotential: number;
+  progressGain: number; // New: A percentage value representing the efficiency gain.
 }
 
 export interface RippleEffect {
@@ -84,7 +84,6 @@ export class ProgressOrchestrator {
   private static detectCrossProjectRelations(responses: AllFrameworkResponses): CrossProjectRelation[] {
     const relations: CrossProjectRelation[] = [];
     
-    // Safely combine all items from all available agent responses.
     const allTasks: AllTaskTypes[] = [
       ...(responses.agileResult?.userStories || []),
       ...(responses.kanbanResult?.board.cards || []),
@@ -97,20 +96,23 @@ export class ProgressOrchestrator {
     
     skillGroups.forEach(group => {
       if (group.tasks.length > 1) {
+        const strength = this.calculateRelationStrength(group);
+        const strengthMultiplier = { 'low': 0.5, 'medium': 1, 'high': 1.5 }[strength];
+        const progressGain = Math.min((group.tasks.length - 1) * 15 * strengthMultiplier, 100);
+
         relations.push({
           type: 'shared_skill',
-          strength: this.calculateRelationStrength(group),
+          strength: strength,
           tasks: group.tasks,
           skill: group.skill,
-          momentumPotential: this.calculateMomentumPotential(group)
+          momentumPotential: this.calculateMomentumPotential(group),
+          progressGain: parseFloat(progressGain.toFixed(1)) // Add the new metric
         });
       }
     });
     
     return relations;
   }
-  
-  // ... (The rest of the helper methods remain the same, as they are resilient to empty inputs) ...
 
   private static getTaskTitle(task: AllTaskTypes): string {
     if ('title' in task) return task.title;

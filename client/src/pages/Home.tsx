@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import BrainDumpInterface from "@/components/BrainDumpInterface";
@@ -7,15 +8,16 @@ import ProgressOrchestration from "@/components/ProgressOrchestration";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Brain, Sparkles } from "lucide-react";
 import type { EnergyState } from "@/components/EnergySelector";
-
-// State for storing API response from brain dump processing
+import { ProgressRippleViz } from "../components/ProgressRippleViz"; // Updated import path
 
 export default function Home() {
   const [brainDumpResponse, setBrainDumpResponse] = useState<BrainDumpApiResponse | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [sourceTask, setSourceTask] = useState<string>("");
 
   const handleBrainDumpSubmit = async (content: string, energyState: EnergyState) => {
     setIsProcessing(true);
+    setSourceTask(content);
     console.log("Processing brain dump:", { content, energyState });
     
     try {
@@ -26,7 +28,11 @@ export default function Home() {
         },
         body: JSON.stringify({
           input: content,
-          energyState,
+          userContext: { // Match the backend UserContext interface
+            userId: 1, // Static user ID for demo purposes
+            energyState,
+            cognitiveType: 'unknown'
+          },
         }),
       });
 
@@ -37,12 +43,10 @@ export default function Home() {
       const result: BrainDumpApiResponse = await response.json();
       console.log('Brain dump processed successfully:', result);
       
-      // Update the UI with processed results
       setBrainDumpResponse(result);
       
     } catch (error) {
       console.error('Failed to process brain dump:', error);
-      // TODO: Show user-friendly error message
     } finally {
       setIsProcessing(false);
     }
@@ -50,17 +54,14 @@ export default function Home() {
 
   const handleSearch = (query: string) => {
     console.log("Performing semantic search:", query);
-    //todo: implement actual vector search
   };
 
   const handleProjectClick = (projectId: string) => {
     console.log("Navigate to project:", projectId);
-    //todo: implement project navigation
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -84,9 +85,8 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          {/* Hero Section */}
           <Card className="p-8 text-center bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
-            <div className="space-y-4">
+             <div className="space-y-4">
               <div className="flex items-center justify-center gap-2 text-primary mb-4">
                 <Sparkles className="h-6 w-6" />
                 <span className="text-lg font-medium">Transform Scattered Thoughts</span>
@@ -99,20 +99,25 @@ export default function Home() {
             </div>
           </Card>
 
-          {/* Brain Dump Interface */}
           <BrainDumpInterface 
             onSubmit={handleBrainDumpSubmit}
             isProcessing={isProcessing}
             data-testid="brain-dump-section"
           />
 
-          {/* Framework Switcher */}
+          {/* Neurodivergent Superpowers Visualization */}
+          {brainDumpResponse?.orchestration?.crossProjectImpacts && brainDumpResponse.orchestration.crossProjectImpacts.length > 0 && (
+            <ProgressRippleViz
+              relations={brainDumpResponse.orchestration.crossProjectImpacts}
+              sourceTask={sourceTask}
+            />
+          )}
+
           <FrameworkSwitcher
             data={brainDumpResponse}
             data-testid="framework-section"
           />
 
-          {/* Search and Progress in Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <SearchInterface 
               onSearch={handleSearch}
@@ -127,7 +132,6 @@ export default function Home() {
             />
           </div>
 
-          {/* Footer */}
           <Card className="p-6 text-center bg-muted/30">
             <p className="text-sm text-muted-foreground">
               Built for the <strong>TiDB AgentX Hackathon 2025</strong> • 

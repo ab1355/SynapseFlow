@@ -1,15 +1,16 @@
 # Synapse
 
-Synapse is an intelligent note-taking and project management application designed for neurodivergent minds. It leverages multiple productivity frameworks and AI-powered analysis to create a personalized, adaptive, and momentum-driven workflow.
+Synapse is an intelligent note-taking and project management application designed for neurodivergent minds. It transforms scattered thoughts into organized action by leveraging a suite of AI-powered agents. Its standout feature is the **"Neurodivergent Superpowers Visualization,"** which provides a real-time dashboard showing how the system turns context-switching into an accelerated source of project completion.
 
 ## ✨ Key Features
 
-- **Brain Dump Interface**: Distraction-free input for docs, ideas, random thoughts
-- **Multi-Framework Views**: Same data displayed through 5+ different methodology lenses (Agile/Kanban/GTD/PARA/Custom)
-- **Energy-State Adaptation**: UI changes based on detected focus levels
-- **Vector Semantic Search**: AI-powered similarity matching to find related thoughts and ideas
-- **Progress Orchestration**: Cross-project momentum tracking and cascading updates
-- **Pattern Recognition**: Learning individual neurodivergent workflow patterns
+- **Brain Dump Interface**: Distraction-free input for docs, ideas, and random thoughts.
+- **Multi-Framework Views**: The same data is displayed through 5+ different methodology lenses (Agile, Kanban, GTD, PARA, Custom).
+- **Energy-State Adaptation**: The UI adapts based on detected focus levels.
+- **Vector Semantic Search**: AI-powered similarity matching to find related thoughts and ideas.
+- **✨ Neurodivergent Superpowers Visualization**: A real-time dashboard that visually demonstrates how context-switching accelerates progress across multiple projects, turning a common challenge into a celebrated strength.
+- **Progress Orchestration**: Cross-project momentum tracking and cascading updates.
+- **Pattern Recognition**: Learns and adapts to individual neurodivergent workflow patterns.
 
 ## 🚀 Quick Start
 
@@ -45,31 +46,22 @@ Synapse is an intelligent note-taking and project management application designe
 
 The project includes both end-to-end (E2E) and performance benchmark tests to ensure reliability and speed.
 
-1.  **E2E Tests**: These tests validate the `/api/brain-dump` endpoint using realistic inputs.
+1.  **E2E Tests**: Validate the `/api/brain-dump` endpoint.
     - **Prerequisite**: Ensure the development server is running.
-    - **Command**:
-      ```bash
-      npm test server/tests/e2e/brainDump.test.ts
-      ```
+    - **Command**: `npm test server/tests/e2e/brainDump.test.ts`
 
-2.  **Performance Benchmarks**: These tests measure the processing time of the core agent factory across a range of inputs.
-    - **Command**:
-      ```bash
-      npm test server/lib/performance/AgentBenchmark.ts
-      ```
+2.  **Performance Benchmarks**: Measure the processing time of the core agent factory.
+    - **Command**: `npm test server/lib/performance/AgentBenchmark.ts`
 
 ## 🤖 Core Agent Architecture
 
-The backend is powered by a modular, multi-agent system designed for comprehensive analysis.
+The backend is powered by a **Vector-Enhanced Agent System**. This dynamic, modular architecture uses AI to understand the semantic meaning of your tasks.
 
-- **InputParser**: Deterministically analyzes raw text into structured tasks, ideas, and concerns.
-- **Specialized Agents**:
-    - `AgileAgent`: Converts inputs into user stories and epics.
-    - `KanbanAgent`: Creates adaptive Kanban boards based on user context.
-    - `GTDAgent`: Organizes items into "Next Actions", "Projects", and other GTD contexts.
-- **ProgressOrchestrator**: Analyzes the outputs from all agents to identify cross-framework momentum opportunities and ripple effects.
-- **AgentFactory**: The central entry point that manages the entire workflow, from parsing input to orchestrating the final response.
+- **`AgentFactory`**: The central coordinator that dynamically routes tasks to the most appropriate agents.
+- **Vector Embeddings**: Automatically generated for all inputs, enabling semantic search and context-aware analysis.
+- **Specialized Agents**: A suite of agents (`Agile`, `Kanban`, `GTD`, etc.) that apply different productivity frameworks. They are now context-aware, using historical data to make smarter recommendations.
+- **`ProgressOrchestrator`**: Analyzes outputs to find cross-project momentum opportunities and quantifies the progress gain from semantically related tasks.
 
 ---
 
-This project is a work in progress. For detailed development status, see `dev.md`.
+This project has completed its core development roadmap, culminating in the "Neurodivergent Superpowers Visualization" feature. For detailed technical history, see `dev.md`.
