@@ -48,10 +48,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Brain Dump API endpoint
+  // Brain Dump API endpoint with full TiDB integration
   app.post("/api/brain-dump", async (req, res) => {
     try {
-      const { input, energyState } = req.body;
+      const { input, energyState, userId = 'demo-user', projectId } = req.body;
       
       if (!input || typeof input !== 'string') {
         return res.status(400).json({ 
@@ -65,37 +65,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log('Processing brain dump:', { input, energyState });
+      console.log('Processing brain dump with TiDB integration:', { input, energyState, userId });
 
-      // Convert lowercase energy state from frontend to title case for agents
-      const energyStateMap: Record<string, UserContext['energyState']> = {
-        'high': 'High',
-        'medium': 'Medium',
-        'low': 'Low',
-        'hyperfocus': 'Hyperfocus',
-        'scattered': 'Scattered'
-      };
+      // Import brain dump service
+      const { brainDumpService } = await import('./lib/brain-dump-service');
 
-      // Create user context for AI agents
-      const userContext: UserContext = {
-        energyState: energyStateMap[energyState],
-        // TODO: Get from user profile in database
-        cognitiveType: undefined,
-        productivityPatterns: undefined
-      };
-
-      // Process input through AI agents using AgentFactory
-      const frameworks = AgentFactory.processInput(input, userContext);
-
-      const response = {
-        success: true,
-        originalInput: input,
+      // Process brain dump with full database persistence and vector embeddings
+      const result = await brainDumpService.processBrainDump({
+        input,
         energyState,
-        processedAt: new Date().toISOString(),
-        frameworks
-      };
+        userId,
+        projectId
+      });
 
-      res.json(response);
+      res.json(result);
       
     } catch (error) {
       console.error('Brain dump processing error:', error);
