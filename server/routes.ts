@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { healthCheck, initializeSchema } from "./lib/tidb";
+import { AgentFactory, type UserContext } from "./lib/agents";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // put application routes here
@@ -58,7 +59,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      if (!energyState || !['High', 'Medium', 'Low', 'Hyperfocus', 'Scattered'].includes(energyState)) {
+      if (!energyState || !['high', 'medium', 'low', 'hyperfocus', 'scattered'].includes(energyState)) {
         return res.status(400).json({ 
           error: "Missing or invalid energyState field" 
         });
@@ -66,69 +67,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Processing brain dump:', { input, energyState });
 
-      // Mock AI processing - transform input into different framework formats
+      // Convert lowercase energy state from frontend to title case for agents
+      const energyStateMap: Record<string, UserContext['energyState']> = {
+        'high': 'High',
+        'medium': 'Medium',
+        'low': 'Low',
+        'hyperfocus': 'Hyperfocus',
+        'scattered': 'Scattered'
+      };
+
+      // Create user context for AI agents
+      const userContext: UserContext = {
+        energyState: energyStateMap[energyState],
+        // TODO: Get from user profile in database
+        cognitiveType: undefined,
+        productivityPatterns: undefined
+      };
+
+      // Process input through AI agents using AgentFactory
+      const frameworks = AgentFactory.processInput(input, userContext);
+
       const response = {
         success: true,
         originalInput: input,
         energyState,
         processedAt: new Date().toISOString(),
-        frameworks: {
-          agile: {
-            userStories: [
-              {
-                id: "story-1",
-                title: `As a user, I want to ${input.substring(0, 50)}...`,
-                description: `Based on your ${energyState.toLowerCase()} energy state, here's how we can structure this as actionable work.`,
-                priority: energyState === 'High' ? 'high' : energyState === 'Low' ? 'low' : 'medium',
-                storyPoints: energyState === 'Hyperfocus' ? 8 : energyState === 'High' ? 5 : 3
-              }
-            ]
-          },
-          kanban: {
-            columns: {
-              todo: [{
-                id: "task-1", 
-                title: input.split('.')[0] || input.substring(0, 30),
-                description: `Organized from your ${energyState.toLowerCase()} energy brain dump`
-              }],
-              inProgress: [],
-              done: []
-            }
-          },
-          gtd: {
-            actions: [
-              {
-                id: "action-1",
-                title: `Process: ${input.substring(0, 40)}...`,
-                context: energyState === 'Hyperfocus' ? '@deep-work' : '@computer',
-                energyRequired: energyState,
-                timeEstimate: energyState === 'Low' ? '15-30 min' : '30-60 min'
-              }
-            ]
-          },
-          para: {
-            classification: {
-              type: energyState === 'Hyperfocus' ? 'Project' : 'Area',
-              category: 'Personal Development',
-              actionable: true,
-              item: {
-                title: input.split('.')[0] || `Brain dump from ${energyState.toLowerCase()} state`,
-                description: input
-              }
-            }
-          },
-          custom: {
-            energyOptimized: {
-              recommendedTime: energyState === 'Hyperfocus' ? 'Next 2-4 hours' : 
-                             energyState === 'High' ? 'Next 1-2 hours' :
-                             energyState === 'Low' ? 'When energy rises' : 'Today',
-              breakdownStrategy: energyState === 'Scattered' ? 'micro-tasks' : 
-                               energyState === 'Low' ? 'gentle-steps' : 'focused-blocks',
-              cognitiveLoad: energyState === 'Hyperfocus' ? 'high' : 
-                           energyState === 'Scattered' ? 'minimal' : 'moderate'
-            }
-          }
-        }
+        frameworks
       };
 
       res.json(response);

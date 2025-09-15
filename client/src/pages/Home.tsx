@@ -1,76 +1,51 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import BrainDumpInterface from "@/components/BrainDumpInterface";
-import FrameworkTabs from "@/components/FrameworkTabs";
+import FrameworkSwitcher, { type BrainDumpApiResponse } from "@/components/FrameworkSwitcher";
 import SearchInterface from "@/components/SearchInterface";
 import ProgressOrchestration from "@/components/ProgressOrchestration";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Brain, Sparkles } from "lucide-react";
 import type { EnergyState } from "@/components/EnergySelector";
-import type { FrameworkType } from "@/components/FrameworkTabs";
 
-//todo: remove mock functionality when backend is implemented
-const mockFrameworkData = {
-  agile: [
-    {
-      id: "1",
-      title: "Implement Real-time Processing",
-      description: "As a user, I want my brain dumps processed instantly so I can see immediate organizational value",
-      acceptanceCriteria: [
-        "Brain dump submits trigger immediate AI processing",
-        "User sees progress indicator during processing", 
-        "Results appear within 5 seconds",
-        "Error handling for failed processing"
-      ],
-      priority: "high" as const,
-      storyPoints: 8
-    }
-  ],
-  kanban: [
-    {
-      id: "k1",
-      title: "AI Processing Integration",
-      description: "Connect OpenAI API for brain dump transformation",
-      status: "in-progress" as const,
-      labels: ["ai", "backend", "priority"]
-    }
-  ],
-  gtd: [
-    {
-      id: "g1", 
-      title: "Review AI processing accuracy",
-      context: "@computer",
-      timeRequired: "30 min",
-      energy: "high" as const,
-      nextAction: true
-    }
-  ],
-  para: [
-    {
-      id: "p1",
-      title: "AI Integration",
-      type: "project" as const,
-      description: "Implementing OpenAI for brain dump processing"
-    }
-  ],
-  custom: []
-};
+// State for storing API response from brain dump processing
 
 export default function Home() {
-  const [activeFramework, setActiveFramework] = useState<FrameworkType>("agile");
-  const [frameworkData, setFrameworkData] = useState(mockFrameworkData);
+  const [brainDumpResponse, setBrainDumpResponse] = useState<BrainDumpApiResponse | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleBrainDumpSubmit = async (content: string, energyState: EnergyState) => {
     setIsProcessing(true);
     console.log("Processing brain dump:", { content, energyState });
     
-    //todo: replace with actual AI processing
-    setTimeout(() => {
+    try {
+      const response = await fetch('/api/brain-dump', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          input: content,
+          energyState,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: BrainDumpApiResponse = await response.json();
+      console.log('Brain dump processed successfully:', result);
+      
+      // Update the UI with processed results
+      setBrainDumpResponse(result);
+      
+    } catch (error) {
+      console.error('Failed to process brain dump:', error);
+      // TODO: Show user-friendly error message
+    } finally {
       setIsProcessing(false);
-      console.log("Brain dump processed successfully!");
-      // In real implementation, this would update frameworkData with AI-processed results
-    }, 3000);
+    }
   };
 
   const handleSearch = (query: string) => {
@@ -131,11 +106,9 @@ export default function Home() {
             data-testid="brain-dump-section"
           />
 
-          {/* Framework Tabs */}
-          <FrameworkTabs
-            data={frameworkData}
-            activeFramework={activeFramework}
-            onFrameworkChange={setActiveFramework}
+          {/* Framework Switcher */}
+          <FrameworkSwitcher
+            data={brainDumpResponse}
             data-testid="framework-section"
           />
 
