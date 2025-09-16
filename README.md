@@ -42,16 +42,28 @@ Synapse is an intelligent note-taking and project management application designe
     ```
     The application will be available at `http://localhost:8080`.
 
-### Testing
+## 💰 Pricing
 
-The project includes both end-to-end (E2E) and performance benchmark tests to ensure reliability and speed.
+Synapse offers a range of pricing plans to fit your needs, from individual use to large teams.
 
-1.  **E2E Tests**: Validate the `/api/brain-dump` endpoint.
-    - **Prerequisite**: Ensure the development server is running.
-    - **Command**: `npm test server/tests/e2e/brainDump.test.ts`
+### FREE TIER
+- ✅ Up to 50 tasks/month
+- ✅ Basic framework agents
+- ✅ Simple progress tracking
+- ✅ Community support
 
-2.  **Performance Benchmarks**: Measure the processing time of the core agent factory.
-    - **Command**: `npm test server/lib/performance/AgentBenchmark.ts`
+### PAY-AS-YOU-GO
+- 📊 $0.10 per task processed
+- 📊 $0.01 per vector search
+- 📊 $5 minimum monthly spend
+
+### MONTHLY PLANS
+
+| Plan                 | Price      | Features                                                                                                                                                             |
+| -------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **SYNAPSE STARTER**  | $19/month  | ✅ 500 tasks/month<br/>✅ All framework agents<br/>✅ Progress orchestration<br/>✅ Basic analytics<br/>✅ Email support                                                       |
+| **SYNAPSE PRO**      | $49/month  | ✅ 2,500 tasks/month<br/>✅ Advanced neurodivergent features<br/>✅ Progress ripple visualization<br/>✅ Energy state detection<br/>✅ Priority support                      |
+| **SYNAPSE ENTERPRISE** | $199/month | ✅ Unlimited tasks<br/>✅ Team collaboration<br/>✅ Custom frameworks<br/>✅ Analytics dashboard<br/>✅ White-label options<br/>✅ Dedicated support                        |
 
 ## 🤖 Core Agent Architecture
 
