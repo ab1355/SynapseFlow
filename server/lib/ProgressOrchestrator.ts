@@ -22,7 +22,7 @@ export interface AllFrameworkResponses {
     customResult?: CustomResponse;
 }
 
-_type AllTaskTypes = UserStory | KanbanCard | NextAction | PARAItem | CustomItem;_
+type AllTaskTypes = UserStory | KanbanCard | NextAction | PARAItem | CustomItem;
 
 export interface CrossProjectRelation {
   type: 'shared_skill' | 'dependency' | 'sequential_task';

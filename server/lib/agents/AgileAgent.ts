@@ -172,7 +172,7 @@ export class AgileAgent {
       const tags = [userContext.energyState.toLowerCase(), task.category];
       if (task.keywords.some(k => ['ui', 'frontend', 'css'].includes(k))) tags.push('frontend');
       if (task.keywords.some(k => ['db', 'database', 'backend'].includes(k))) tags.push('backend');
-      return [...new Set(tags)]; // Return unique tags
+      return Array.from(new Set(tags)); // Return unique tags
   }
 
   private static assignToEpic(task: ExtractedTask): string | undefined {
