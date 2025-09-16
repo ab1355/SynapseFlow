@@ -1,14 +1,14 @@
 
 // server/lib/agents/KanbanAgent.ts
 
-import { ParsedInput, Task } from './InputParser';
+import { ParsedInput, Task } from '../InputParser';
 
 // --- INTERFACE DEFINITIONS ---
 
 // Represents the user's current context for agent processing
 export interface UserContext {
   energyState: 'High' | 'Medium' | 'Low' | 'Hyperfocus' | 'Scattered';
-  cognitiveType?: 'adhd' | 'autism' | 'combined' | 'neurotypical' | 'unknown';
+  cognitiveType?: 'ADHD' | 'ASD' | 'MIXED' | 'NEUROTYPICAL' | 'unknown';
 }
 
 // Represents a single column on the Kanban board
@@ -82,7 +82,7 @@ export class KanbanAgent {
     ];
     
     // Neurodivergent adaptations
-    if (userContext.cognitiveType === 'adhd') {
+    if (userContext.cognitiveType === 'ADHD') {
       baseColumns.push({ 
         name: 'Hyperfocus Queue', 
         wipLimit: 1, 
@@ -90,7 +90,7 @@ export class KanbanAgent {
       });
     }
     
-    if (userContext.cognitiveType === 'autism') {
+    if (userContext.cognitiveType === 'ASD') {
       baseColumns.push({ 
         name: 'Routine Tasks', 
         wipLimit: 3, 
@@ -103,10 +103,10 @@ export class KanbanAgent {
   
   private static calculateWipLimit(userContext: UserContext): number {
     const baseLimits = {
-      'adhd': 2,
-      'autism': 1,    
-      'combined': 2,
-      'neurotypical': 3,
+      'ADHD': 2,
+      'ASD': 1,    
+      'MIXED': 2,
+      'NEUROTYPICAL': 3,
       'unknown': 2
     };
     

@@ -11,7 +11,7 @@ import { CustomResponse, CustomItem } from "./agents/CustomAgent";
 
 export interface UserContext {
   energyState: 'High' | 'Medium' | 'Low' | 'Hyperfocus' | 'Scattered';
-  cognitiveType?: 'adhd' | 'autism' | 'combined' | 'neurotypical' | 'unknown';
+  cognitiveType?: 'ADHD' | 'ASD' | 'MIXED' | 'NEUROTYPICAL' | 'unknown';
 }
 
 export interface AllFrameworkResponses {

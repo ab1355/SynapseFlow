@@ -1,7 +1,7 @@
 
 // server/lib/agents/AgileAgent.ts
 
-import { ParsedInput, Task, Project as ParsedProject } from './InputParser';
+import { ParsedInput, Task, Project as ParsedProject } from '../InputParser';
 
 // --- INTERFACE DEFINITIONS ---
 
@@ -12,7 +12,7 @@ export interface UserHistory {
 
 export interface UserContext {
   energyState: 'High' | 'Medium' | 'Low' | 'Hyperfocus' | 'Scattered';
-  cognitiveType?: 'ADHD' | 'ASD' | 'MIXED' | 'NEUROTYPICAL';
+  cognitiveType?: 'ADHD' | 'ASD' | 'MIXED' | 'NEUROTYPICAL' | 'unknown';
   history?: UserHistory;
 }
 
