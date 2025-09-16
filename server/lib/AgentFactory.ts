@@ -23,7 +23,7 @@ export interface UserContext {
   userId: number;
   userTier: 'free' | 'pro' | 'enterprise';
   energyState: 'High' | 'Medium' | 'Low' | 'Hyperfocus' | 'Scattered';
-  cognitiveType?: 'adhd' | 'autism' | 'combined' | 'neurotypical' | 'unknown';
+  cognitiveType?: 'ADHD' | 'ASD' | 'MIXED' | 'NEUROTYPICAL' | 'unknown';
   historicalContext?: SimilarTask[]; // <-- New: Provides agents with context from similar past tasks.
 }
 
@@ -94,7 +94,7 @@ export class AgentFactory {
         'Custom': () => CustomAgent.process(parsedInput, enrichedUserContext)
     };
 
-    for (const framework of recommendedFrameworks) {
+    for (const framework of Array.from(recommendedFrameworks)) {
         if (availableAgents.includes(framework) && agentMap[framework as keyof typeof agentMap]) {
             agentPromises[framework.toLowerCase()] = agentMap[framework as keyof typeof agentMap]();
             agentsToRun.push(framework);
@@ -110,7 +110,7 @@ export class AgentFactory {
     // 6. Orchestration
     let orchestration: OrchestrationResult | null = null;
     if (agentsToRun.length > 0) {
-        const allResponses: AllFrameworkResponses = frameworkResponses;
+        const allResponses = frameworkResponses as AllFrameworkResponses;
         orchestration = ProgressOrchestrator.analyze(allResponses, enrichedUserContext);
     }
     
