@@ -21,6 +21,7 @@ import { SimilarTask } from './embedding'; // Import SimilarTask interface
 // The UserContext now includes historical data for other agents to use.
 export interface UserContext {
   userId: number;
+  userTier: 'free' | 'pro' | 'enterprise';
   energyState: 'High' | 'Medium' | 'Low' | 'Hyperfocus' | 'Scattered';
   cognitiveType?: 'adhd' | 'autism' | 'combined' | 'neurotypical' | 'unknown';
   historicalContext?: SimilarTask[]; // <-- New: Provides agents with context from similar past tasks.
@@ -46,6 +47,12 @@ export interface MultiFrameworkResponse {
         agentsExecuted: string[];
     };
 }
+
+const TIER_AGENT_ACCESS = {
+    free: ['Semantic', 'Custom'],
+    pro: ['Semantic', 'Custom', 'Agile', 'Kanban', 'GTD', 'PARA'],
+    enterprise: ['Semantic', 'Custom', 'Agile', 'Kanban', 'GTD', 'PARA'],
+};
 
 // --- AGENT FACTORY IMPLEMENTATION ---
 
@@ -76,6 +83,8 @@ export class AgentFactory {
     const agentPromises: { [key: string]: Promise<any> } = {};
     const agentsToRun = [];
 
+    const availableAgents = TIER_AGENT_ACCESS[userContext.userTier] || [];
+
     // The set of agents to run is determined by the SemanticAgent's output.
     const agentMap = {
         'Agile': () => AgileAgent.process(parsedInput, enrichedUserContext),
@@ -86,7 +95,7 @@ export class AgentFactory {
     };
 
     for (const framework of recommendedFrameworks) {
-        if (agentMap[framework as keyof typeof agentMap]) {
+        if (availableAgents.includes(framework) && agentMap[framework as keyof typeof agentMap]) {
             agentPromises[framework.toLowerCase()] = agentMap[framework as keyof typeof agentMap]();
             agentsToRun.push(framework);
         }

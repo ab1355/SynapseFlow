@@ -43,3 +43,10 @@ The following phases have been completed, transforming Synapse into a proactive 
 - **Backend (`ProgressOrchestrator.ts`)**: The `CrossProjectRelation` interface was enhanced with a `progressGain` metric. This quantifies the percentage of progress made on a related task when a semantically similar task is completed. The calculation is based on the number of related tasks and the strength of the semantic link.
 - **Frontend (`ProgressRippleViz.tsx`)**: A new, dedicated React component was created to animate and display these "progress ripples." It takes the initial user input and the `crossProjectImpacts` from the API and renders a cascading visualization of how one action creates a wave of progress across the system.
 - **Integration (`Home.tsx`)**: The `ProgressRippleViz` component was integrated into the main application page. It is conditionally rendered whenever the API response contains `crossProjectImpacts`, providing immediate, powerful visual feedback that demonstrates the core value proposition of the Synapse system.
+
+### Phase 7: Tier-Based Agent Gating
+- **Status**: ✅ Complete
+- **Description**: Implemented a tier-based access control system for AI agents to support different pricing plans.
+- **Backend (`database/schema.sql`)**: Added a `pricing_tiers` table and updated the `user_profiles` table to include a `tier_id`. This allows for different levels of access and features based on the user's subscription.
+- **Backend (`shared/schema.ts`)**: Updated the Drizzle schemas to reflect the database changes, including the new `tier` property on the `users` table.
+- **Backend (`server/lib/AgentFactory.ts`)**: Modified the `AgentFactory` to read the user's tier from the `UserContext` and dynamically gate access to agents based on the permissions defined in `TIER_AGENT_ACCESS`. This ensures that users only have access to the agents included in their pricing plan.

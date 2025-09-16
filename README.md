@@ -46,19 +46,6 @@ Synapse is an intelligent note-taking and project management application designe
 
 Synapse offers a range of pricing plans to fit your needs, from individual use to large teams.
 
-### FREE TIER
-- ✅ Up to 50 tasks/month
-- ✅ Basic framework agents
-- ✅ Simple progress tracking
-- ✅ Community support
-
-### PAY-AS-YOU-GO
-- 📊 $0.10 per task processed
-- 📊 $0.01 per vector search
-- 📊 $5 minimum monthly spend
-
-### MONTHLY PLANS
-
 | Plan                 | Price      | Features                                                                                                                                                             |
 | -------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **SYNAPSE STARTER**  | $19/month  | ✅ 500 tasks/month<br/>✅ All framework agents<br/>✅ Progress orchestration<br/>✅ Basic analytics<br/>✅ Email support                                                       |

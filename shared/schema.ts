@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   productivityPatterns: jsonb("productivity_patterns"), // Learning patterns over time
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  tier: text("tier").$type<'free' | 'pro' | 'enterprise'>().default('free'),
 });
 
 export type EnergyState = "low" | "medium" | "high" | "hyperfocus" | "scattered";

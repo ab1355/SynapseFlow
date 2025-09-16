@@ -14,6 +14,18 @@ DROP TABLE IF EXISTS agile_stories;
 DROP TABLE IF EXISTS tasks;
 DROP TABLE IF EXISTS projects; 
 DROP TABLE IF EXISTS user_profiles;
+DROP TABLE IF EXISTS pricing_tiers;
+
+-- Create pricing_tiers table
+CREATE TABLE pricing_tiers (
+    tier_id VARCHAR(255) PRIMARY KEY,
+    tier_name VARCHAR(255) NOT NULL UNIQUE,
+    monthly_price DECIMAL(10, 2) NOT NULL,
+    max_projects INT DEFAULT 1,
+    max_tasks_per_project INT DEFAULT 25,
+    max_brain_dumps INT DEFAULT 50,
+    agent_access JSON NOT NULL
+);
 
 -- Create user_profiles table
 CREATE TABLE user_profiles (
@@ -22,7 +34,9 @@ CREATE TABLE user_profiles (
     cognitive_type ENUM('ADHD', 'ASD', 'MIXED', 'NEUROTYPICAL') DEFAULT NULL,
     productivity_patterns JSON DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    tier_id VARCHAR(255) NOT NULL,
+    FOREIGN KEY (tier_id) REFERENCES pricing_tiers(tier_id) ON DELETE RESTRICT
 );
 
 -- Create projects table  
@@ -158,8 +172,13 @@ CREATE TABLE project_relationships (
 );
 
 -- Insert sample data for development and testing
-INSERT INTO user_profiles (user_id, email, cognitive_type, productivity_patterns) VALUES 
-('user-demo-001', 'demo@synapse.dev', 'ADHD', JSON_OBJECT(
+INSERT INTO pricing_tiers (tier_id, tier_name, monthly_price, max_projects, max_tasks_per_project, max_brain_dumps, agent_access) VALUES
+('free', 'Free', 0.00, 1, 25, 50, JSON_OBJECT('agents', JSON_ARRAY('Semantic', 'Custom'))),
+('pro', 'Pro', 10.00, 100, 100, 1000, JSON_OBJECT('agents', JSON_ARRAY('Semantic', 'Custom', 'Agile', 'Kanban', 'GTD', 'PARA'))),
+('enterprise', 'Enterprise', 50.00, -1, -1, -1, JSON_OBJECT('agents', JSON_ARRAY('Semantic', 'Custom', 'Agile', 'Kanban', 'GTD', 'PARA')));
+
+INSERT INTO user_profiles (user_id, email, cognitive_type, tier_id, productivity_patterns) VALUES 
+('user-demo-001', 'demo@synapse.dev', 'ADHD', 'pro', JSON_OBJECT(
     'peak_energy_times', JSON_ARRAY('09:00-11:00', '14:00-16:00'),
     'hyperfocus_triggers', JSON_ARRAY('code', 'research', 'writing'),
     'context_switch_tolerance', 'medium',
