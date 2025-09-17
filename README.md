@@ -82,6 +82,7 @@ Synapse offers a range of pricing plans to fit your needs, from individual use t
 The backend is powered by a **Vector-Enhanced Agent System**. This dynamic, modular architecture uses AI to understand the semantic meaning of your tasks.
 
 - **`AgentFactory`**: The central coordinator that dynamically routes tasks to the most appropriate agents.
+- **`Prompt Warehouse`**: A centralized, database-driven repository for all agent prompts. This allows for dynamic updates, versioning, and management of prompts without requiring code changes, making the agents more flexible and easier to maintain.
 - **Vector Embeddings**: Automatically generated for all inputs, enabling semantic search and context-aware analysis.
 - **Specialized Agents**: A suite of agents (`Agile`, `Kanban`, `GTD`, etc.) that apply different productivity frameworks. They are now context-aware, using historical data to make smarter recommendations.
 - **`ProgressOrchestrator`**: Analyzes outputs to find cross-project momentum opportunities and quantifies the progress gain from semantically related tasks.

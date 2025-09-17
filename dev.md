@@ -61,3 +61,13 @@ The following phases have been completed, transforming Synapse into a proactive 
 - **Frontend (`client/src/components/BrainDumpInterface.tsx`)**: The brain dump component was enhanced with a file input, allowing users to select and attach a file. The UI was designed to handle either text input or a file upload, but not both simultaneously.
 - **Frontend (`client/src/pages/Home.tsx`)**: The main page was updated with a new handler function (`handleFileSubmit`) to manage the file upload process, sending the file to the new backend endpoint.
 - **Documentation (`README.md`)**: The project's `README` was updated with detailed instructions on how to install Docker and run the `unstructured` API container, ensuring a smooth setup process for future developers.
+
+### Phase 9: Prompt Warehouse for Agent Flexibility
+- **Status**: ✅ Complete
+- **Description**: To make the agent prompts more manageable, versionable, and dynamically updatable without code changes, a `prompt_warehouse` was implemented. This feature centralizes all agent-related prompts in the database.
+- **Backend (`database/schema.sql`)**: A `prompt_warehouse` table was added to store prompts, including `prompt_name`, `prompt_text`, `agent_type`, and `version`.
+- **Backend (`shared/schema.ts`)**: The Drizzle schema was updated to include `promptWarehouse`.
+- **Backend (`prompts/agent_prompts.md`)**: A markdown file was created to serve as a source of truth for initial prompt seeding.
+- **Backend (`server/lib/prompt-warehouse-service.ts`)**: A new service was created to manage fetching prompts from the database, caching them for performance, and seeding the database from the `agent_prompts.md` file on startup.
+- **Backend (`server/index.ts`)**: The server's main entry point was updated to call the `seedPrompts` function in development, ensuring the database is always populated with the latest prompts.
+- **Backend (`server/lib/agents/AgileAgent.ts`)**: The `AgileAgent` was refactored to fetch its prompt from the `PromptWarehouseService` instead of using a hardcoded string. An `initialize` method was added to pre-fetch the prompt on startup.

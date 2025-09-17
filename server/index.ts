@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { seedPrompts } from "./lib/prompt-warehouse-service";
 
 const app = express();
 app.use(express.json());
@@ -52,6 +53,7 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
+    await seedPrompts();
   } else {
     serveStatic(app);
   }

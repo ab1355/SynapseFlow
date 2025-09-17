@@ -1,54 +1,15 @@
-https://docs.unstructured.io/open-source/introduction/overview
 // server/lib/agents/AgileAgent.ts
 
 import { ParsedInput, Task, Project as ParsedProject } from '../InputParser';
-
-// --- INTERFACE DEFINITIONS ---
-
-export interface UserHistory {
-    completedStoryPoints: number;
-    sprintsCompleted: number;
-}
-
-export interface UserContext {
-  energyState: 'High' | 'Medium' | 'Low' | 'Hyperfocus' | 'Scattered';
-  cognitiveType?: 'ADHD' | 'ASD' | 'MIXED' | 'NEUROTYPICAL' | 'unknown';
-  history?: UserHistory;
-}
-
-export interface UserStory {
-  id: string;
-  title: string;
-  description: string;
-  acceptanceCriteria: string[];
-  storyPoints: number;
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  tags: string[];
-  epic?: string;
-  sprint?: string;
-}
-
-export interface Epic {
-    id: string;
-    name: string;
-    storyIds: string[];
-}
-
-export interface Sprint {
-    id: string;
-    name: string;
-    storyIds: string[];
-    startDate: string;
-    endDate: string;
-}
-
-export interface AgileResponse {
-  userStories: UserStory[];
-  epics: Epic[];
-  sprints: Sprint[];
-  backlog: UserStory[];
-  velocityPrediction: string;
-}
+import { PromptWarehouseService } from '../prompt-warehouse-service';
+import { 
+    UserHistory, 
+    UserContext, 
+    UserStory, 
+    Epic, 
+    Sprint, 
+    AgileResponse 
+} from './AgileAgent.d';
 
 // This is a more detailed task representation used internally by this agent.
 interface ExtractedTask {
@@ -63,7 +24,16 @@ interface ExtractedTask {
 // --- AGENT IMPLEMENTATION ---
 
 export class AgileAgent {
+  private static prompt: string;
+
+  static async initialize() {
+    this.prompt = await PromptWarehouseService.getPrompt('agile-story-generation');
+  }
+
   static async process(parsedInput: ParsedInput, userContext: UserContext): Promise<AgileResponse> {
+    if (!this.prompt) {
+      await this.initialize();
+    }
     
     const extractedTasks: ExtractedTask[] = parsedInput.tasks.map(this.extractTaskDetails);
 
@@ -117,14 +87,11 @@ export class AgileAgent {
   }
   
   private static generateStoryDescription(task: ExtractedTask): string {
-    const templates = {
-      'technical': `As a developer, I want to ${task.action} so that ${task.benefit || 'the system works properly'}`,
-      'feature': `As a user, I want to ${task.action} so that ${task.benefit || 'I can accomplish my goals'}`, 
-      'bug': `As a user, I want ${task.action} fixed so that ${task.benefit || 'the application works as expected'}`,
-      'improvement': `As a user, I want ${task.action} improved so that ${task.benefit || 'my experience is better'}`
-    };
+    const filledPrompt = this.prompt
+        .replace('{{task.action}}', task.action)
+        .replace('{{task.benefit}}', task.benefit || 'the system works properly');
     
-    return templates[task.category] || templates['feature'];
+    return filledPrompt;
   }
   
   private static estimateStoryPoints(task: ExtractedTask, userContext: UserContext): number {
