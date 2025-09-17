@@ -19,6 +19,7 @@ Synapse is an intelligent note-taking and project management application designe
 - Node.js 20+
 - PostgreSQL database (TiDB Serverless recommended)
 - OpenAI API key
+- Docker
 
 ### Installation
 
@@ -41,6 +42,30 @@ Synapse is an intelligent note-taking and project management application designe
     npm run dev
     ```
     The application will be available at `http://localhost:8080`.
+
+## 📂 File Processing with `unstructured`
+
+To enable file processing capabilities (e.g., uploading PDFs, Word documents, and images), the application uses a self-hosted instance of the open-source [`unstructured`](https://github.com/Unstructured-IO/unstructured) API. You will need to have Docker installed to run it.
+
+### Running the `unstructured` API
+
+1.  **Install Docker**: If you don't have Docker installed, follow the official instructions for your operating system: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)
+
+2.  **Run the `unstructured` container**: Open your terminal and run the following command to start the API server:
+
+    ```bash
+    docker run -p 8002:8000 -d --name unstructured-api quay.io/unstructured-io/unstructured-api:latest --port 8000 --host 0.0.0.0
+    ```
+
+    This command does the following:
+    *   `docker run`: Starts a new Docker container.
+    *   `-p 8002:8000`: Maps port `8002` on your local machine to port `8000` inside the container. The application is configured to connect to port `8002`.
+    *   `-d`: Runs the container in detached mode (in the background).
+    *   `--name unstructured-api`: Assigns a name to the container for easy reference.
+    *   `quay.io/unstructured-io/unstructured-api:latest`: Specifies the official `unstructured` API image.
+    *   `--port 8000 --host 0.0.0.0`: Configures the API server inside the container to listen on all network interfaces.
+
+Once the container is running, the application will be able to connect to it and process files.
 
 ## 💰 Pricing
 

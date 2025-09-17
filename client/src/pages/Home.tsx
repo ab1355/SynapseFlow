@@ -28,11 +28,8 @@ export default function Home() {
         },
         body: JSON.stringify({
           input: content,
-          userContext: { // Match the backend UserContext interface
-            userId: 1, // Static user ID for demo purposes
-            energyState,
-            cognitiveType: 'unknown'
-          },
+          energyState,
+          userId: 'demo-user'
         }),
       });
 
@@ -51,6 +48,39 @@ export default function Home() {
       setIsProcessing(false);
     }
   };
+
+  const handleFileSubmit = async (file: File, energyState: EnergyState) => {
+    setIsProcessing(true);
+    setSourceTask(file.name);
+    console.log("Processing file brain dump:", { fileName: file.name, energyState });
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('energyState', energyState);
+    formData.append('userId', 'demo-user');
+
+    try {
+      const response = await fetch('/api/brain-dump/file', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: BrainDumpApiResponse = await response.json();
+      console.log('File brain dump processed successfully:', result);
+
+      setBrainDumpResponse(result);
+
+    } catch (error) {
+      console.error('Failed to process file brain dump:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
 
   const handleSearch = (query: string) => {
     console.log("Performing semantic search:", query);
@@ -101,6 +131,7 @@ export default function Home() {
 
           <BrainDumpInterface 
             onSubmit={handleBrainDumpSubmit}
+            onFileSubmit={handleFileSubmit}
             isProcessing={isProcessing}
             data-testid="brain-dump-section"
           />

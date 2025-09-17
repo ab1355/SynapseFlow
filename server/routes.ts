@@ -1,8 +1,13 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import multer from 'multer';
 import { storage } from "./storage";
 import { healthCheck, initializeSchema } from "./lib/tidb";
 import { AgentFactory, type UserContext } from "./lib/agents";
+import { unstructuredService } from './lib/unstructuredService';
+
+// Configure multer for file uploads
+const upload = multer({ storage: multer.memoryStorage() });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // put application routes here
@@ -85,6 +90,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: "Failed to process brain dump",
         message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.post('/api/brain-dump/file', upload.single('file'), async (req, res) => {
+    try {
+      const { energyState, userId = 'demo-user', projectId } = req.body;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: 'No file uploaded.' });
+      }
+
+      if (!energyState || !['high', 'medium', 'low', 'hyperfocus', 'scattered'].includes(energyState)) {
+        return res.status(400).json({ 
+          error: "Missing or invalid energyState field" 
+        });
+      }
+
+      // Process the file using the Unstructured API
+      const extractedText = await unstructuredService.processFile(file.buffer, file.originalname);
+
+      // Now, use the extracted text as input for the brain dump service
+      const { brainDumpService } = await import('./lib/brain-dump-service');
+      const result = await brainDumpService.processBrainDump({
+        input: extractedText,
+        energyState,
+        userId,
+        projectId
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error('File brain dump processing error:', error);
+      res.status(500).json({ 
+        error: 'Failed to process file brain dump',
+        message: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });

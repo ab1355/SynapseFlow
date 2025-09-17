@@ -1,31 +1,54 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Brain, Sparkles, Loader2 } from "lucide-react";
+import { Brain, Sparkles, Loader2, Paperclip, X } from "lucide-react";
 import EnergySelector, { type EnergyState } from "./EnergySelector";
 
 interface BrainDumpInterfaceProps {
   onSubmit?: (content: string, energyState: EnergyState) => void;
+  onFileSubmit?: (file: File, energyState: EnergyState) => void;
   isProcessing?: boolean;
   className?: string;
 }
 
 export default function BrainDumpInterface({ 
   onSubmit, 
+  onFileSubmit,
   isProcessing = false, 
   className = "" 
 }: BrainDumpInterfaceProps) {
   const [content, setContent] = useState("");
   const [energyState, setEnergyState] = useState<EnergyState>("medium");
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = () => {
-    if (content.trim() && onSubmit) {
-      console.log("Brain dump submitted:", { content, energyState });
+    if (file && onFileSubmit) {
+      onFileSubmit(file, energyState);
+    } else if (content.trim() && onSubmit) {
       onSubmit(content.trim(), energyState);
       setContent("");
     }
   };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+    }
+  };
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removeFile = () => {
+    setFile(null);
+    if(fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
 
   const getAdaptiveSpacing = (state: EnergyState) => {
     switch (state) {
@@ -38,6 +61,7 @@ export default function BrainDumpInterface({
   };
 
   const getPlaceholder = (state: EnergyState) => {
+    if (file) return "File selected. Ready to process.";
     const placeholders = {
       low: "Take your time... what's on your mind?",
       medium: "What would you like to organize today?", 
@@ -69,17 +93,44 @@ export default function BrainDumpInterface({
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="min-h-[120px] resize-none text-base leading-relaxed"
-            disabled={isProcessing}
+            disabled={isProcessing || !!file}
           />
           
           <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              {content.length > 0 && `${content.length} characters`}
+            <div className="flex items-center gap-2">
+              <input 
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                disabled={isProcessing}
+              />
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={handleFileButtonClick}
+                disabled={isProcessing || !!content}
+              >
+                <Paperclip className="h-4 w-4 mr-2" />
+                Attach File
+              </Button>
+              {file && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>{file.name}</span>
+                  <Button variant="ghost" size="icon" onClick={removeFile}>
+                    <X className="h-4 w-4"/>
+                  </Button>
+                </div>
+              )}
+               <div className="text-sm text-muted-foreground">
+                {content.length > 0 && `${content.length} characters`}
+              </div>
             </div>
+
             <Button 
               data-testid="button-process-dump"
               onClick={handleSubmit}
-              disabled={!content.trim() || isProcessing}
+              disabled={(!content.trim() && !file) || isProcessing}
               size="sm"
               className="min-w-[120px]"
             >

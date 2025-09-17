@@ -50,3 +50,14 @@ The following phases have been completed, transforming Synapse into a proactive 
 - **Backend (`database/schema.sql`)**: Added a `pricing_tiers` table and updated the `user_profiles` table to include a `tier_id`. This allows for different levels of access and features based on the user's subscription.
 - **Backend (`shared/schema.ts`)**: Updated the Drizzle schemas to reflect the database changes, including the new `tier` property on the `users` table.
 - **Backend (`server/lib/AgentFactory.ts`)**: Modified the `AgentFactory` to read the user's tier from the `UserContext` and dynamically gate access to agents based on the permissions defined in `TIER_AGENT_ACCESS`. This ensures that users only have access to the agents included in their pricing plan.
+
+### Phase 8: File-Based Brain Dumps with `unstructured.io`
+- **Status**: ✅ Complete
+- **Description**: To expand the input capabilities beyond plain text, the application now supports file uploads. Users can submit documents (PDF, DOCX), images, and other file types, and the system will extract the text content for processing. This was achieved by integrating the `unstructured.io` library.
+- **Initial Implementation (Cloud API)**: The feature was first built using the `unstructured.io` cloud API. This involved creating an `unstructuredService` to handle API requests with an API key.
+- **Final Implementation (Open-Source & Self-Hosted)**: To prioritize data privacy and eliminate external dependencies, the service was reconfigured to use a local, self-hosted `unstructured` API instance running in a Docker container.
+- **Backend (`server/routes.ts`)**: A new endpoint, `/api/brain-dump/file`, was created to handle `multipart/form-data` requests. It uses `multer` to process the file upload before passing it to the `unstructuredService`.
+- **Backend (`server/lib/unstructuredService.ts`)**: This new service encapsulates the logic for interacting with the `unstructured` API. It was updated to point to the local Docker container (`http://localhost:8002`) and no longer requires an API key.
+- **Frontend (`client/src/components/BrainDumpInterface.tsx`)**: The brain dump component was enhanced with a file input, allowing users to select and attach a file. The UI was designed to handle either text input or a file upload, but not both simultaneously.
+- **Frontend (`client/src/pages/Home.tsx`)**: The main page was updated with a new handler function (`handleFileSubmit`) to manage the file upload process, sending the file to the new backend endpoint.
+- **Documentation (`README.md`)**: The project's `README` was updated with detailed instructions on how to install Docker and run the `unstructured` API container, ensuring a smooth setup process for future developers.
