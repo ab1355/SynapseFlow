@@ -11,6 +11,7 @@ import { GTDAgent, GTDResponse } from './agents/GTDAgent';
 import { PARAAgent, PARAResponse } from './agents/PARAAgent';
 import { CustomAgent, CustomResponse } from './agents/CustomAgent';
 import { SemanticAgent, SemanticResponse } from './agents/SemanticAgent';
+import { AkashAgent, AkashResponse } from './agents/AkashAgent';
 
 import { ProgressOrchestrator, OrchestrationResult, AllFrameworkResponses } from './ProgressOrchestrator';
 import { embedAndStoreTask } from './embedding';
@@ -33,6 +34,7 @@ export interface FrameworkResponses {
     gtd?: GTDResponse;
     para?: PARAResponse;
     custom?: CustomResponse;
+    akash?: AkashResponse;
 }
 
 export interface MultiFrameworkResponse {
@@ -49,9 +51,9 @@ export interface MultiFrameworkResponse {
 }
 
 const TIER_AGENT_ACCESS = {
-    free: ['Semantic', 'Custom'],
-    pro: ['Semantic', 'Custom', 'Agile', 'Kanban', 'GTD', 'PARA'],
-    enterprise: ['Semantic', 'Custom', 'Agile', 'Kanban', 'GTD', 'PARA'],
+    free: ['Semantic', 'Custom', 'Akash'],
+    pro: ['Semantic', 'Custom', 'Agile', 'Kanban', 'GTD', 'PARA', 'Akash'],
+    enterprise: ['Semantic', 'Custom', 'Agile', 'Kanban', 'GTD', 'PARA', 'Akash'],
 };
 
 // --- AGENT FACTORY IMPLEMENTATION ---
@@ -91,7 +93,8 @@ export class AgentFactory {
         'Kanban': () => KanbanAgent.process(parsedInput, enrichedUserContext),
         'GTD': () => GTDAgent.process(parsedInput, enrichedUserContext),
         'PARA': () => PARAAgent.process(parsedInput, enrichedUserContext),
-        'Custom': () => CustomAgent.process(parsedInput, enrichedUserContext)
+        'Custom': () => CustomAgent.process(parsedInput, enrichedUserContext),
+        'Akash': () => AkashAgent.process(parsedInput, enrichedUserContext)
     };
 
     for (const framework of Array.from(recommendedFrameworks)) {

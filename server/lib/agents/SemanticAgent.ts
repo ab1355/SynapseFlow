@@ -72,7 +72,8 @@ export class SemanticAgent {
             'Agile': 0,
             'Kanban': 0,
             'GTD': 0,
-            'PARA': 0
+            'PARA': 0,
+            'Akash': 0
         };
 
         // A very simple heuristic to simulate pattern analysis.
@@ -86,6 +87,9 @@ export class SemanticAgent {
             }
             if (content.includes('inbox') || content.includes('next action')) {
                 frameworkMentions['GTD']++;
+            }
+            if (content.includes('akash')) {
+                frameworkMentions['Akash']++;
             }
         }
 

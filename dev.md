@@ -71,3 +71,11 @@ The following phases have been completed, transforming Synapse into a proactive 
 - **Backend (`server/lib/prompt-warehouse-service.ts`)**: A new service was created to manage fetching prompts from the database, caching them for performance, and seeding the database from the `agent_prompts.md` file on startup.
 - **Backend (`server/index.ts`)**: The server's main entry point was updated to call the `seedPrompts` function in development, ensuring the database is always populated with the latest prompts.
 - **Backend (`server/lib/agents/AgileAgent.ts`)**: The `AgileAgent` was refactored to fetch its prompt from the `PromptWarehouseService` instead of using a hardcoded string. An `initialize` method was added to pre-fetch the prompt on startup.
+
+### Phase 10: Akash Network Agent for Decentralized AI
+- **Status**: ✅ Complete
+- **Description**: Integrated a new agent to leverage the Akash Network, a decentralized cloud for GPUs. This provides access to powerful, open-source language models in a cost-effective and privacy-focused manner.
+- **Backend (`server/lib/agents/AkashAgent.ts`)**: A new `AkashAgent` was created. This agent securely connects to the Akash Chat API using an API key from the environment variables (`AKASH_API_KEY`). It sends the user's consolidated input to a selected model (e.g., `mixtral-8x7b-instruct-v0.1`) for analysis.
+- **Backend (`server/lib/agents/SemanticAgent.ts`)**: The `SemanticAgent` was updated to recognize "akash" as a keyword. When detected, it recommends the `Akash` framework, triggering the `AkashAgent`.
+- **Backend (`server/lib/AgentFactory.ts`)**: The `AgentFactory` was updated to include the `AkashAgent` in the agent map and tier access lists, making it available for dynamic execution.
+- **Documentation (`README.md` and `dev.md`)**: Updated to reflect the new integration, including setup instructions for the `AKASH_API_KEY`.
